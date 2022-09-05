@@ -2,18 +2,17 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URI
 
 plugins {
-    kotlin("jvm") version "1.6.20"
-    id("org.jetbrains.dokka") version "1.6.20" // Used to create a javadoc jar
+    kotlin("jvm") version "1.7.10"
+    id("org.jetbrains.dokka") version "1.7.10" // Used to create a javadoc jar
     `maven-publish`
     signing
 }
 
-group = "org.example"
-version = "1.0-SNAPSHOT"
+group = "io.github.romansavka-mq"
+version = "1.0"
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 val dokkaVersion: String by project
@@ -50,15 +49,15 @@ java {
 
 publishing {
     publications {
-        val dokkaTemplatePlugin by creating(MavenPublication::class) {
+        create<MavenPublication>("mavenJava") {
             artifactId = project.name
             from(components["java"])
             artifact(javadocJar.get())
 
             pom {
-                name.set("Dokka template plugin")
-                description.set("This is a plugin template for Dokka")
-                url.set("https://github.com/Kotlin/dokka-plugin-template/")
+                name.set("Suppress Undocumented Dokka plugin")
+                description.set("This is a plugin to generate docs only for documented members")
+                url.set("https://github.com/romansavka-mq/suppress-undocumented-dokka-plugin")
 
                 licenses {
                     license {
@@ -70,46 +69,33 @@ publishing {
 
                 developers {
                     developer {
-                        id.set("JetBrains")
-                        name.set("JetBrains Team")
-                        organization.set("JetBrains")
-                        organizationUrl.set("http://www.jetbrains.com")
+                        id.set("romansavka-mq")
+                        name.set("Roman Savka")
+                        url.set("https://github.com/romansavka-mq")
                     }
                 }
 
                 scm {
-                    connection.set("scm:git:git://github.com/Kotlin/dokka-plugin-template.git")
-                    url.set("https://github.com/Kotlin/dokka-plugin-template/tree/master")
+                    connection.set("scm:git:git@github.com:romansavka-mq/suppress-undocumented-dokka-plugin.git")
+                    url.set("https://github.com/romansavka-mq/suppress-undocumented-dokka-plugin/tree/main")
                 }
             }
         }
-        signPublicationsIfKeyPresent(dokkaTemplatePlugin)
     }
 
     repositories {
         maven {
-            url = URI("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+            url = URI("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
             credentials {
-                username = System.getenv("SONATYPE_USER")
-                password = System.getenv("SONATYPE_PASSWORD")
+                username = findProperty("sonatype.user") as String?
+                password = findProperty("sonatype.password") as String?
             }
         }
     }
 }
 
-fun Project.signPublicationsIfKeyPresent(publication: MavenPublication) {
-    val signingKeyId: String? = System.getenv("SIGN_KEY_ID")
-    val signingKey: String? = System.getenv("SIGN_KEY")
-    val signingKeyPassphrase: String? = System.getenv("SIGN_KEY_PASSPHRASE")
-
-    if (!signingKey.isNullOrBlank()) {
-        extensions.configure<SigningExtension>("signing") {
-            if (signingKeyId?.isNotBlank() == true) {
-                useInMemoryPgpKeys(signingKeyId, signingKey, signingKeyPassphrase)
-            } else {
-                useInMemoryPgpKeys(signingKey, signingKeyPassphrase)
-            }
-            sign(publication)
-        }
-    }
+signing {
+    // Credentials should be configured according to
+    // https://docs.gradle.org/current/userguide/signing_plugin.html#sec:signatory_credentials
+    sign(publishing.publications.getByName("mavenJava"))
 }

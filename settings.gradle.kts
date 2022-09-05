@@ -1,2 +1,2 @@
-rootProject.name = "awesome-dokka-plugin"
+rootProject.name = "suppress-undocumented-dokka-plugin"
 
